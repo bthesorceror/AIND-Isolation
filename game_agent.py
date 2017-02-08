@@ -6,13 +6,53 @@ augment the test suite with your own test cases to further test your code.
 You must test your agent's strength against a set of agents with known
 relative strength using tournament.py and include the results in your report.
 """
-import random
-
 
 class Timeout(Exception):
     """Subclass base exception for code clarity."""
     pass
 
+def baseline_score(game, player):
+    """ returns the simple heuristic score """
+
+    other_player = game.get_opponent(player)
+    our_moves = len(game.get_legal_moves(player))
+    their_moves = len(game.get_legal_moves(other_player))
+
+    return game.utility(player) + float(our_moves - their_moves)
+
+def blank_score(game, player):
+    """ return score as a ratio of valid moves to blank spaces """
+
+    blank_count = len(game.get_blank_spaces())
+    result = baseline_score(game, player)
+
+    if blank_count > 0:
+        result = (result / blank_count)
+
+    return result
+
+def move_count_score(game, player):
+    other_player = game.get_opponent(player)
+    our_moves = len(game.get_legal_moves(player))
+    their_moves = len(game.get_legal_moves(other_player))
+
+    diff = float(our_moves - their_moves)
+
+    if diff != 0:
+        return game.utility(player) + (game.move_count / diff)
+    else:
+        return game.utility(player)
+
+def only_player_blank_score(game, player):
+    """ Only evaluates players available moves compared to blank spaces """
+
+    blank_count = len(game.get_blank_spaces())
+    result = game.utility(player)
+
+    if blank_count > 0:
+        result = result + (len(game.get_legal_moves(player)) / blank_count)
+
+    return result
 
 def custom_score(game, player):
     """Calculate the heuristic value of a game state from the point of view
@@ -37,12 +77,7 @@ def custom_score(game, player):
         The heuristic value of the current game state to the specified player.
     """
 
-    if game.active_player == player:
-        other_player = game.inactive_player
-    else:
-        other_player = game.active_player
-
-    return float(len(game.get_legal_moves(player)) - len(game.get_legal_moves(other_player)))
+    return move_count_score(game, player)
 
 class CustomPlayer:
     """Game-playing agent that chooses a move using your evaluation function
@@ -121,24 +156,25 @@ class CustomPlayer:
 
         self.time_left = time_left
         result = (-1, -1)
+        depth = 1
 
         if len(legal_moves) == 0:
             return result
 
         try:
             if self.iterative:
-                depth = 1
                 while True:
                     result = self.apply_method(game, depth)[1]
                     depth += 1
             else:
-                result = self.apply_method(game, self.search_depth)[1]
-            return result
+                return self.apply_method(game, self.search_depth)[1]
 
         except Timeout:
             return result
 
     def apply_method(self, game, depth):
+        """ Apply game algorithm based on setting passed in during initialization """
+
         if self.method == "minimax":
             return self.minimax(game, depth)
         else:
@@ -246,35 +282,35 @@ class CustomPlayer:
         if len(legal_moves) == 0 or depth == 0:
             return self.score(game, self), (-1, -1)
 
-        def iterate():
-            for move in legal_moves:
-                score, _ = self.alphabeta(game.forecast_move(move),
-                                          depth - 1, alpha, beta,
-                                          not maximizing_player)
-
-                yield move, score
-
-                if beta <= alpha:
-                    break
-
         if maximizing_player:
             current = float("-inf")
 
-            for move, score in iterate():
+            for move in legal_moves:
+                score, _ = self.alphabeta(game.forecast_move(move),
+                                          depth - 1, alpha, beta, False)
+
                 if score > current:
                     current_move = move
 
                 current = max(current, score)
                 alpha = max(alpha, current)
 
+                if beta <= alpha:
+                    break
         else:
             current = float("inf")
 
-            for move, score in iterate():
+            for move in legal_moves:
+                score, _ = self.alphabeta(game.forecast_move(move),
+                                          depth - 1, alpha, beta, True)
+
                 if score < current:
                     current_move = move
 
                 current = min(current, score)
                 beta = min(beta, current)
+
+                if beta <= alpha:
+                    break
 
         return current, current_move

@@ -32,6 +32,8 @@ def blank_score(game, player):
     return result
 
 def move_count_score(game, player):
+    """ use move count to create a ratio score """
+
     other_player = game.get_opponent(player)
     our_moves = len(game.get_legal_moves(player))
     their_moves = len(game.get_legal_moves(other_player))
@@ -77,7 +79,9 @@ def custom_score(game, player):
         The heuristic value of the current game state to the specified player.
     """
 
-    return move_count_score(game, player)
+    return max(move_count_score(game, player),
+               blank_score(game, player),
+               only_player_blank_score(game, player))
 
 class CustomPlayer:
     """Game-playing agent that chooses a move using your evaluation function
@@ -109,7 +113,7 @@ class CustomPlayer:
         timer expires.
     """
 
-    def __init__(self, search_depth=3, score_fn=custom_score,
+    def __init__(self, search_depth=3, score_fn=custom_score, \
                  iterative=True, method='minimax', timeout=10.):
         self.search_depth = search_depth
         self.iterative = iterative
@@ -164,7 +168,7 @@ class CustomPlayer:
         try:
             if self.iterative:
                 while True:
-                    result = self.apply_method(game, depth)[1]
+                    _, result = self.apply_method(game, depth)
                     depth += 1
             else:
                 return self.apply_method(game, self.search_depth)[1]
@@ -223,7 +227,7 @@ class CustomPlayer:
         outcomes = []
         for move in legal_moves:
             score, _ = self.minimax(game.forecast_move(move), depth - 1, not maximizing_player)
-            outcomes.append({ "score": score, "move": move })
+            outcomes.append({"score": score, "move": move})
 
         result = None
         get_score = lambda x: x["score"]
@@ -280,7 +284,9 @@ class CustomPlayer:
         current_move = (-1, -1)
 
         if len(legal_moves) == 0 or depth == 0:
-            return self.score(game, self), (-1, -1)
+            return self.score(game, self), current_move
+        else:
+            current_move = legal_moves[0]
 
         if maximizing_player:
             current = float("-inf")

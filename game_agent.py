@@ -1,4 +1,5 @@
-"""This file contains all the classes you must complete for this project.
+"""
+This file contains all the classes you must complete for this project.
 
 You can use the test cases in agent_test.py to help during development, and
 augment the test suite with your own test cases to further test your code.
@@ -56,8 +57,23 @@ def only_player_blank_score(game, player):
 
     return result
 
+def cached_score(fn):
+    """ cache scores from function to avoid calculation penalty """
+    cache = {}
+
+    def score(game, player):
+        key = game.to_string()
+        if key not in cache:
+            cache[key] = fn(game, player)
+
+        return cache[key]
+
+    return score
+
+@cached_score
 def custom_score(game, player):
-    """Calculate the heuristic value of a game state from the point of view
+    """
+    Calculate the heuristic value of a game state from the point of view
     of the given player.
 
     Note: this function should be called from within a Player instance as
@@ -79,12 +95,11 @@ def custom_score(game, player):
         The heuristic value of the current game state to the specified player.
     """
 
-    return max(move_count_score(game, player),
-               blank_score(game, player),
-               only_player_blank_score(game, player))
+    return move_count_score(game, player)
 
 class CustomPlayer:
-    """Game-playing agent that chooses a move using your evaluation function
+    """
+    Game-playing agent that chooses a move using your evaluation function
     and a depth-limited minimax algorithm with alpha-beta pruning. You must
     finish and test this player to make sure it properly uses minimax and
     alpha-beta to return a good move before the search time limit expires.
@@ -123,7 +138,8 @@ class CustomPlayer:
         self.TIMER_THRESHOLD = timeout
 
     def get_move(self, game, legal_moves, time_left):
-        """Search for the best move from the available legal moves and return a
+        """
+        Search for the best move from the available legal moves and return a
         result before the time limit expires.
 
         This function must perform iterative deepening if self.iterative=True,
@@ -185,7 +201,8 @@ class CustomPlayer:
             return self.alphabeta(game, depth)
 
     def minimax(self, game, depth, maximizing_player=True):
-        """Implement the minimax search algorithm as described in the lectures.
+        """
+        Implement the minimax search algorithm as described in the lectures.
 
         Parameters
         ----------
@@ -224,10 +241,13 @@ class CustomPlayer:
         if len(legal_moves) == 0 or depth == 0:
             return self.score(game, self), (-1, -1)
 
-        outcomes = []
-        for move in legal_moves:
-            score, _ = self.minimax(game.forecast_move(move), depth - 1, not maximizing_player)
-            outcomes.append({"score": score, "move": move})
+        def map_outcome(move):
+            max_player = not maximizing_player
+            new_board = game.forecast_move(move)
+            score, _ = self.minimax(new_board, depth - 1, max_player)
+            return {"score": score, "move": move}
+
+        outcomes = [map_outcome(move) for move in legal_moves]
 
         result = None
         get_score = lambda x: x["score"]
@@ -240,7 +260,8 @@ class CustomPlayer:
         return result["score"], result["move"]
 
     def alphabeta(self, game, depth, alpha=float("-inf"), beta=float("inf"), maximizing_player=True):
-        """Implement minimax search with alpha-beta pruning as described in the
+        """
+        Implement minimax search with alpha-beta pruning as described in the
         lectures.
 
         Parameters

@@ -6,7 +6,8 @@ from random import randint
 
 
 def null_score(game, player):
-    """This heuristic presumes no knowledge for non-terminal states, and
+    """
+    This heuristic presumes no knowledge for non-terminal states, and
     returns the same uninformative value for all other states.
 
     Parameters
@@ -36,7 +37,8 @@ def null_score(game, player):
 
 
 def open_move_score(game, player):
-    """The basic evaluation function described in lecture that outputs a score
+    """
+    The basic evaluation function described in lecture that outputs a score
     equal to the number of moves open for your computer player on the board.
 
     Parameters
@@ -65,7 +67,8 @@ def open_move_score(game, player):
 
 
 def improved_score(game, player):
-    """The "Improved" evaluation function discussed in lecture that outputs a
+    """
+    The "Improved" evaluation function discussed in lecture that outputs a
     score equal to the difference in the number of moves available to the
     two players.
 

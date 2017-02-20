@@ -21,6 +21,15 @@ def baseline_score(game, player):
 
     return game.utility(player) + float(our_moves - their_moves)
 
+def other_baseline_score(game, player):
+    """ returns alternative baseline score """
+
+    other_player = game.get_opponent(player)
+    our_moves = len(game.get_legal_moves(player))
+    their_moves = len(game.get_legal_moves(other_player))
+
+    return game.utility(player) + our_moves - (2.0 * their_moves)
+
 def blank_score(game, player):
     """ return score as a ratio of valid moves to blank spaces """
 
@@ -59,10 +68,12 @@ def only_player_blank_score(game, player):
 
 def cached_score(fn):
     """ cache scores from function to avoid calculation penalty """
+
     cache = {}
 
     def score(game, player):
         key = game.to_string()
+
         if key not in cache:
             cache[key] = fn(game, player)
 
